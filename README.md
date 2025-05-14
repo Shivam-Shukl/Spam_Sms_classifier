@@ -33,5 +33,5 @@ InboxGuard is a simple yet powerful spam classification web application. It leve
 
 ---
 
-## Project Structure
+
 
