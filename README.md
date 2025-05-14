@@ -34,4 +34,17 @@ InboxGuard is a simple yet powerful spam classification web application. It leve
 ---
 
 ##  Project Structure
-
+spam-classifier/
+│
+├── app.py # Main Flask app
+├── spam_spam_classifier.ipynb # Jupyter Notebook for training and preprocessing
+├── model.pkl # Trained spam classification model
+├── vectorizer.pkl # Saved TfidfVectorizer
+├── templates/
+│ └── index.html # HTML template for frontend
+├── static/
+│ └── style.css # Optional CSS file
+├── Screenshot 2025-05-14 140607.png # Screenshot of input page
+├── Screenshot 2025-05-14 140645.png # Screenshot of prediction page
+├── requirements.txt # Python dependencies
+└── README.md # You're reading it!
