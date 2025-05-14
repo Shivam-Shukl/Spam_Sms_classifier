@@ -18,10 +18,13 @@ InboxGuard is a simple yet powerful spam classification web application. It leve
 
 ## 🖼 Screenshots
 
-| Input Message Page | Prediction Output |
+| Input Message Page |
 |--------------------|-------------------|
 | ![Input](https://github.com/user-attachments/assets/115f6bb0-ba16-4fac-b3b5-4fc25ad42e7a)
- | ![Prediction](https://github.com/user-attachments/assets/a0686ba9-6cd2-4cbe-8bf6-4761afd3d824) |
+Prediction Output |
+|--------------------|-------------------|
+| ![Prediction](https://github.com/user-attachments/assets/a0686ba9-6cd2-4cbe-8bf6-4761afd3d824) |
+
 
 ---
 
