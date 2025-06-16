@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spam SMS Classifier | inBox Guard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #eef2f3, #8e9eab);
+      color: #333;
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      padding: 30px 10px;
+    }
+
+    header h1 {
+      font-size: 3em;
+      color: #2c3e50;
+    }
+
+    header p {
+      font-size: 1.2em;
+      max-width: 800px;
+      margin: 10px auto;
+      color: #444;
+    }
+
+    section {
+      margin: 40px auto; /* Centering the sections */
+      padding: 20px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      max-width: 900px; /* Limiting width for better readability */
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #2d3436;
+    }
+
+    .examples {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .sms-card {
+      background: #f9f9f9;
+      border-left: 5px solid #0984e3;
+      padding: 15px;
+      border-radius: 10px;
+      flex: 1 1 300px;
+    }
+
+    .spam {
+      border-left-color: #d63031;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 15px;
+      margin-top: 10px;
+      font-size: 1em;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      resize: vertical; /* Allow vertical resizing */
+      min-height: 100px;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 12px 20px;
+      background-color: #0984e3;
+      color: white;
+      font-size: 1em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background-color: #0652dd;
+    }
+
+    ul {
+      list-style: square;
+      padding-left: 20px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      margin-top: 40px;
+      font-size: 0.9em;
+      color: #777;
+    }
+
+    /* Styles for prediction result */
+    .prediction-area {
+        margin-top: 25px;
+        padding: 20px;
+        border-radius: 8px;
+        font-size: 1.5em;
+        font-weight: bold;
+        text-align: center;
+    }
+
+    .prediction-spam {
+        background-color: #ffe6e6; /* Light red */
+        color: #d63031; /* Red */
+        border: 1px solid #d63031;
+    }
+
+    .prediction-ham {
+        background-color: #e6ffe6; /* Light green */
+        color: #28a745; /* Green */
+        border: 1px solid #28a745;
+    }
+
+    .original-message-display {
+        margin-top: 15px;
+        font-size: 1em;
+        color: #555;
+        font-style: italic;
+        background-color: #f0f0f0;
+        padding: 10px;
+        border-radius: 5px;
+        word-wrap: break-word; /* Ensure long messages break lines */
+    }
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>iBox Guard - Spam SMS Classifier</h1>
+    <p>Protect your inbox from annoying and fraudulent SMS messages. iBox Guard uses AI technology to classify and filter spam from genuine messages in real time.</p>
+  </header>
+
+  <section>
+    <h2> Why Do We Need a Spam Classifier?</h2>
+    <p>
+      Every day, millions of users receive SMS containing promotions, phishing links, and scams. These not only waste time but can lead to financial and personal losses.
+      <br><br>
+      A spam SMS classifier helps automatically detect and filter out such messages, ensuring only safe and relevant messages reach your attention.
+    </p>
+  </section>
+
+  <section>
+    <h2> Examples of SMS Classification</h2>
+    <div class="examples">
+      <div class="sms-card spam">
+        <strong>Spam:</strong><br>
+        "Congratulations! You've won ₹1,00,000. Click here to claim: bit.ly/xyz123"
+      </div>
+      <div class="sms-card">
+        <strong>Ham:</strong><br>
+        "Your OTP is 487623 for the transaction on XYZ Bank."
+      </div>
+      <div class="sms-card spam">
+        <strong>Spam:</strong><br>
+        "Act now! Lowest loan rates guaranteed. Call 9999999999 now!"
+      </div>
+      <div class="sms-card">
+        <strong>Ham:</strong><br>
+        "Hi! Let's catch up at the café by 6 PM."
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2> Try It Yourself!</h2>
+    <form action="/" method="post"> <label for="userMessage">Enter your SMS message:</label>
+        <textarea id="userMessage" name="userMessage" rows="5" placeholder="Type or paste your SMS here..." required>{{ original_message if original_message else '' }}</textarea>
+        <button type="submit">Check if it's Spam</button>
+    </form>
+
+    {% if prediction_result %}
+        <div class="prediction-area {% if prediction_result == 'Spam' %}prediction-spam{% else %}prediction-ham{% endif %}">
+            Prediction: {{ prediction_result }}
+        </div>
+        {% if original_message %}
+        <div class="original-message-display">
+            Your message: "{{ original_message }}"
+        </div>
+        {% endif %}
+    {% endif %}
+  </section>
+
+  <section>
+    <h2> Key Features</h2>
+    <ul>
+      <li>AI-based SMS classification</li>
+      <li>Detects fraud, scam, promotional messages</li>
+      <li>Safe filtering with privacy protection</li>
+      <li>Works in real-time with low latency</li>
+    </ul>
+  </section>
+
+  <footer>
+    &copy; 2025 iBox Guard. All rights reserved.
+  </footer>
+
+</body>
+</html>
