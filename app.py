@@ -9,8 +9,24 @@ app = Flask(__name__)
 # ============================
 # Load vectorizer and model
 # ============================
-tfidf = pickle.load(open('vectorizer.pkl', 'rb'))
-model = pickle.load(open('model.pkl', 'rb'))
+try:
+    # It's good practice to use absolute paths in production, especially if your app
+    # might be run from a different working directory.
+    # __file__ gives the path to the current script.
+    # os.path.dirname(__file__) gives the directory containing the script.
+    # os.path.join combines path components intelligently.
+    script_dir = os.path.dirname(__file__)
+    vectorizer_path = os.path.join(script_dir, 'vectorizer.pkl')
+    model_path = os.path.join(script_dir, 'model.pkl')
+
+    tfidf = pickle.load(open(vectorizer_path, 'rb'))
+    model = pickle.load(open(model_path, 'rb'))
+except FileNotFoundError:
+    print("Error: 'vectorizer.pkl' or 'model.pkl' not found.")
+    print("Please ensure these files are in the same directory as app.py")
+    # In a production environment, you might want to log this error
+    # and potentially gracefully shut down or return a server error page.
+    exit(1) # Use exit(1) to indicate an error state
 
 # ============================
 # Simple stopwords list (can be extended)
@@ -29,9 +45,11 @@ basic_stopwords = {
 }
 
 # ============================
-# Simple stemmer (optional, very light)
+# Simple stemmer
 # ============================
 def simple_stem(word):
+    # This is a very basic stemming. For more robust stemming without NLTK,
+    # you'd typically need a more complex rule-based system or a pre-computed dictionary.
     suffixes = ['ing', 'ly', 'ed', 'ious', 'ies', 'ive', 'es', 's', 'ment']
     for suffix in suffixes:
         if word.endswith(suffix) and len(word) > len(suffix) + 1:
@@ -43,27 +61,47 @@ def simple_stem(word):
 # ============================
 def transform_text(text):
     text = text.lower()
-    words = re.findall(r'\b\w+\b', text)  # Only keep words
-    words = [word for word in words if word not in basic_stopwords]
-    words = [simple_stem(word) for word in words]
-    return " ".join(words)
+    # Remove punctuation
+    text = ''.join([char for char in text if char not in string.punctuation])
+    # Find all words (alphanumeric sequences)
+    words = re.findall(r'\b\w+\b', text)
+    # Remove stopwords and apply simple stemming
+    processed_words = [simple_stem(word) for word in words if word not in basic_stopwords]
+    return " ".join(processed_words)
 
 # ============================
 # Flask routes
 # ============================
-@app.route('/')
+@app.route('/', methods=['GET', 'POST']) # Handles both initial load (GET) and form submission (POST)
 def home():
-    return render_template('index.html')
+    prediction_result = None # Initialize to None, so it doesn't show initially
+    original_message = ""
 
-@app.route('/predict', methods=['POST'])
-def predict():
-    input_sms = request.form['message']
-    transformed_sms = transform_text(input_sms)
-    vector_input = tfidf.transform([transformed_sms])
-    result = model.predict(vector_input)[0]
+    if request.method == 'POST':
+        input_sms = request.form['userMessage'] # 'userMessage' is the name attribute from your textarea in sms.html
+        original_message = input_sms
 
-    output = "Spam" if result == 1 else "Not Spam"
-    return render_template('index.html', prediction_text=f"Prediction: {output}")
+        transformed_sms = transform_text(input_sms)
+        vector_input = tfidf.transform([transformed_sms])
+        result = model.predict(vector_input)[0]
+
+        prediction_result = "Spam" if result == 1 else "Not Spam"
+
+    # Render the sms.html template, passing the variables
+    # These variables will be available in sms.html
+    return render_template('sms.html',
+                           prediction_result=prediction_result,
+                           original_message=original_message)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # For production deployment, you would NOT use app.run() directly like this.
+    # Instead, you'd use a WSGI server (e.g., Gunicorn, Waitress) to run the app.
+    # Example for Gunicorn: gunicorn --bind 0.0.0.0:5000 app:app
+    # The 'app:app' means 'app.py' module and 'app' Flask instance.
+    
+    # This block is primarily for local testing without a WSGI server.
+    # For actual production, this `if __name__ == '__main__':` block might be
+    # entirely removed or only contain a placeholder for local execution.
+    # We remove debug=True and explicitly bind to 0.0.0.0 to be ready for
+    # how a WSGI server often expects the app to be set up.
+    app.run(host='0.0.0.0', port=5000)
