@@ -10,12 +10,23 @@ app = Flask(__name__)
 # Load vectorizer and model
 # ============================
 try:
-    tfidf = pickle.load(open('vectorizer.pkl', 'rb'))
-    model = pickle.load(open('model.pkl', 'rb'))
+    # It's good practice to use absolute paths in production, especially if your app
+    # might be run from a different working directory.
+    # __file__ gives the path to the current script.
+    # os.path.dirname(__file__) gives the directory containing the script.
+    # os.path.join combines path components intelligently.
+    script_dir = os.path.dirname(__file__)
+    vectorizer_path = os.path.join(script_dir, 'vectorizer.pkl')
+    model_path = os.path.join(script_dir, 'model.pkl')
+
+    tfidf = pickle.load(open(vectorizer_path, 'rb'))
+    model = pickle.load(open(model_path, 'rb'))
 except FileNotFoundError:
     print("Error: 'vectorizer.pkl' or 'model.pkl' not found.")
     print("Please ensure these files are in the same directory as app.py")
-    exit() # Exit the application if essential files are missing
+    # In a production environment, you might want to log this error
+    # and potentially gracefully shut down or return a server error page.
+    exit(1) # Use exit(1) to indicate an error state
 
 # ============================
 # Simple stopwords list (can be extended)
@@ -83,4 +94,14 @@ def home():
                            original_message=original_message)
 
 if __name__ == '__main__':
-    app.run(debug=True) # Run in debug mode for easier development
+    # For production deployment, you would NOT use app.run() directly like this.
+    # Instead, you'd use a WSGI server (e.g., Gunicorn, Waitress) to run the app.
+    # Example for Gunicorn: gunicorn --bind 0.0.0.0:5000 app:app
+    # The 'app:app' means 'app.py' module and 'app' Flask instance.
+    
+    # This block is primarily for local testing without a WSGI server.
+    # For actual production, this `if __name__ == '__main__':` block might be
+    # entirely removed or only contain a placeholder for local execution.
+    # We remove debug=True and explicitly bind to 0.0.0.0 to be ready for
+    # how a WSGI server often expects the app to be set up.
+    app.run(host='0.0.0.0', port=5000)
