@@ -9,8 +9,13 @@ app = Flask(__name__)
 # ============================
 # Load vectorizer and model
 # ============================
-tfidf = pickle.load(open('vectorizer.pkl', 'rb'))
-model = pickle.load(open('model.pkl', 'rb'))
+try:
+    tfidf = pickle.load(open('vectorizer.pkl', 'rb'))
+    model = pickle.load(open('model.pkl', 'rb'))
+except FileNotFoundError:
+    print("Error: 'vectorizer.pkl' or 'model.pkl' not found.")
+    print("Please ensure these files are in the same directory as app.py")
+    exit() # Exit the application if essential files are missing
 
 # ============================
 # Simple stopwords list (can be extended)
@@ -29,9 +34,11 @@ basic_stopwords = {
 }
 
 # ============================
-# Simple stemmer (optional, very light)
+# Simple stemmer
 # ============================
 def simple_stem(word):
+    # This is a very basic stemming. For more robust stemming without NLTK,
+    # you'd typically need a more complex rule-based system or a pre-computed dictionary.
     suffixes = ['ing', 'ly', 'ed', 'ious', 'ies', 'ive', 'es', 's', 'ment']
     for suffix in suffixes:
         if word.endswith(suffix) and len(word) > len(suffix) + 1:
@@ -43,27 +50,37 @@ def simple_stem(word):
 # ============================
 def transform_text(text):
     text = text.lower()
-    words = re.findall(r'\b\w+\b', text)  # Only keep words
-    words = [word for word in words if word not in basic_stopwords]
-    words = [simple_stem(word) for word in words]
-    return " ".join(words)
+    # Remove punctuation
+    text = ''.join([char for char in text if char not in string.punctuation])
+    # Find all words (alphanumeric sequences)
+    words = re.findall(r'\b\w+\b', text)
+    # Remove stopwords and apply simple stemming
+    processed_words = [simple_stem(word) for word in words if word not in basic_stopwords]
+    return " ".join(processed_words)
 
 # ============================
 # Flask routes
 # ============================
-@app.route('/')
+@app.route('/', methods=['GET', 'POST']) # Handles both initial load (GET) and form submission (POST)
 def home():
-    return render_template('index.html')
+    prediction_result = None # Initialize to None, so it doesn't show initially
+    original_message = ""
 
-@app.route('/predict', methods=['POST'])
-def predict():
-    input_sms = request.form['message']
-    transformed_sms = transform_text(input_sms)
-    vector_input = tfidf.transform([transformed_sms])
-    result = model.predict(vector_input)[0]
+    if request.method == 'POST':
+        input_sms = request.form['userMessage'] # 'userMessage' is the name attribute from your textarea in sms.html
+        original_message = input_sms
 
-    output = "Spam" if result == 1 else "Not Spam"
-    return render_template('index.html', prediction_text=f"Prediction: {output}")
+        transformed_sms = transform_text(input_sms)
+        vector_input = tfidf.transform([transformed_sms])
+        result = model.predict(vector_input)[0]
+
+        prediction_result = "Spam" if result == 1 else "Not Spam"
+
+    # Render the sms.html template, passing the variables
+    # These variables will be available in sms.html
+    return render_template('sms.html',
+                           prediction_result=prediction_result,
+                           original_message=original_message)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True) # Run in debug mode for easier development
