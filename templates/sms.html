@@ -1,217 +1,916 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Spam SMS Classifier | inBox Guard</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inbox Guard - Spam SMS Classifier</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(to right, #eef2f3, #8e9eab);
-      color: #333;
-      padding: 20px;
-    }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
 
-    header {
-      text-align: center;
-      padding: 30px 10px;
-    }
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
 
-    header h1 {
-      font-size: 3em;
-      color: #2c3e50;
-    }
+        .brand {
+            font-size: 1.8rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            overflow: hidden;
+            white-space: nowrap;
+            border-right: 3px solid #667eea;
+            animation: typing 3s steps(11) infinite, blink 1s infinite;
+        }
 
-    header p {
-      font-size: 1.2em;
-      max-width: 800px;
-      margin: 10px auto;
-      color: #444;
-    }
+        @keyframes typing {
+            0%, 100% { width: 0; }
+            50% { width: 11ch; }
+        }
 
-    section {
-      margin: 40px auto; /* Centering the sections */
-      padding: 20px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      max-width: 900px; /* Limiting width for better readability */
-    }
+        @keyframes blink {
+            0%, 50% { border-color: #667eea; }
+            51%, 100% { border-color: transparent; }
+        }
 
-    h2 {
-      margin-bottom: 20px;
-      color: #2d3436;
-    }
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
 
-    .examples {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+        }
 
-    .sms-card {
-      background: #f9f9f9;
-      border-left: 5px solid #0984e3;
-      padding: 15px;
-      border-radius: 10px;
-      flex: 1 1 300px;
-    }
+        .nav-links a:hover {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
 
-    .spam {
-      border-left-color: #d63031;
-    }
+        /* Header Section */
+        .header {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        }
 
-    textarea {
-      width: 100%;
-      padding: 15px;
-      margin-top: 10px;
-      font-size: 1em;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      resize: vertical; /* Allow vertical resizing */
-      min-height: 100px;
-    }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+            animation: float 8s ease-in-out infinite;
+        }
 
-    button {
-      margin-top: 15px;
-      padding: 12px 20px;
-      background-color: #0984e3;
-      color: white;
-      font-size: 1em;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
+        .header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"><animate attributeName="opacity" values="0;1;0" dur="3s" repeatCount="indefinite"/></circle><circle cx="80" cy="30" r="1.5" fill="rgba(255,255,255,0.1)"><animate attributeName="opacity" values="0;1;0" dur="4s" repeatCount="indefinite" begin="1s"/></circle><circle cx="60" cy="70" r="1" fill="rgba(255,255,255,0.1)"><animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite" begin="2s"/></circle></svg>');
+            pointer-events: none;
+        }
 
-    button:hover {
-      background-color: #0652dd;
-    }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
 
-    ul {
-      list-style: square;
-      padding-left: 20px;
-    }
+        .header h1 {
+            font-size: 4.5rem;
+            margin-bottom: 1rem;
+            animation: slideInUp 1s ease-out;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            background: linear-gradient(45deg, #fff, #f0f8ff, #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+        }
 
-    footer {
-      text-align: center;
-      padding: 20px;
-      margin-top: 40px;
-      font-size: 0.9em;
-      color: #777;
-    }
+        .header h1::before {
+            content: '🛡️ Protect Your Inbox from Spam SMS!';
+            position: absolute;
+            top: 0;
+            left: 0;
+            -webkit-text-fill-color: rgba(255,255,255,0.1);
+            z-index: -1;
+            transform: translate(2px, 2px);
+        }
 
-    /* Styles for prediction result */
-    .prediction-area {
-        margin-top: 25px;
-        padding: 20px;
-        border-radius: 8px;
-        font-size: 1.5em;
-        font-weight: bold;
-        text-align: center;
-    }
+        .header p {
+            font-size: 1.6rem;
+            margin-bottom: 3rem;
+            animation: slideInUp 1s ease-out 0.3s both;
+            max-width: 900px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            line-height: 1.7;
+        }
 
-    .prediction-spam {
-        background-color: #ffe6e6; /* Light red */
-        color: #d63031; /* Red */
-        border: 1px solid #d63031;
-    }
+        .cta-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+            padding: 1.2rem 3rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            text-decoration: none;
+            display: inline-block;
+            animation: slideInUp 1s ease-out 0.6s both;
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
 
-    .prediction-ham {
-        background-color: #e6ffe6; /* Light green */
-        color: #28a745; /* Green */
-        border: 1px solid #28a745;
-    }
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
 
-    .original-message-display {
-        margin-top: 15px;
-        font-size: 1em;
-        color: #555;
-        font-style: italic;
-        background-color: #f0f0f0;
-        padding: 10px;
-        border-radius: 5px;
-        word-wrap: break-word; /* Ensure long messages break lines */
-    }
+        .cta-button:hover::before {
+            left: 100%;
+        }
 
-  </style>
+        .cta-button:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 15px 40px rgba(255, 107, 107, 0.4);
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Section Styling */
+        .section {
+            padding: 5rem 0;
+            width: 100%;
+            margin: 0;
+        }
+
+        .section-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .section h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #333;
+            position: relative;
+        }
+
+        .section h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        /* Need Section */
+        .need-section {
+            background: white;
+            width: 100%;
+        }
+
+        /* Live Example Section */
+        .live-example {
+            background: #667eea !important; /* Force single constant background color */
+            animation: none !important; /* Force remove any animations */
+            color: white;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        /* Try Yourself Section */
+        .try-section {
+            background: white;
+            width: 100%;
+        }
+
+        /* Features Section */
+        .features-section {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            width: 100%;
+        }
+
+        /* About Model Section */
+        .about-section {
+            background: white;
+            width: 100%;
+        }
+
+        .need-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .need-card {
+            color: white;
+            padding: 2rem;
+            border-radius: 20px;
+            text-align: center;
+            transform: translateY(0);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .need-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+
+        .need-card:hover::before {
+            transform: translateX(100%);
+        }
+
+        .need-card:hover {
+            transform: translateY(-15px) scale(1.03);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+        }
+
+        .need-card i {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            display: block;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .need-card:nth-child(1) {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            animation-delay: 0.1s;
+        }
+
+        .need-card:nth-child(2) {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            animation-delay: 0.2s;
+        }
+
+        .need-card:nth-child(3) {
+            background: linear-gradient(135deg, #ffd93d, #ff6b35);
+            animation-delay: 0.3s;
+        }
+
+        .need-card:nth-child(4) {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            animation-delay: 0.4s;
+        }
+
+        .need-card:nth-child(5) {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            animation-delay: 0.5s;
+        }
+
+        .need-card:nth-child(6) {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            animation-delay: 0.6s;
+        }
+
+        .need-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .need-card p {
+            font-size: 1rem;
+            line-height: 1.6;
+            opacity: 0.95;
+        }
+
+        /* Live Example Section */
+        .live-example {
+            background: #667eea;
+            color: white;
+            animation: backgroundShift 15s ease-in-out infinite;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .live-example::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 10% 20%, rgba(255,255,255,0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(255,255,255,0.05) 0%, transparent 25%),
+                linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.02) 50%, transparent 100%);
+            animation: float 12s ease-in-out infinite reverse;
+        }
+
+        @keyframes backgroundShift {
+            0%, 100% { background: linear-gradient(45deg, #667eea, #764ba2); }
+            16% { background: linear-gradient(45deg, #f093fb, #f5576c); }
+            32% { background: linear-gradient(45deg, #4facfe, #00f2fe); }
+            48% { background: linear-gradient(45deg, #43e97b, #38f9d7); }
+            64% { background: linear-gradient(45deg, #fa709a, #fee140); }
+            80% { background: linear-gradient(45deg, #a8edea, #fed6e3); }
+        }
+
+        .message-display {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 2.5rem;
+            margin: 2rem 0;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .message-item {
+            background: rgba(255,255,255,0.95);
+            color: #333;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideInRight 2s ease-out; ease-out;
+            opacity: 0;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-left: 4px solid transparent;
+            transition: all 0.6s ease;
+        }
+
+        .message-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .message-item.show {
+            opacity: 1;
+        }
+
+        .message-item.spam-message {
+            border-left-color: #ff4757;
+        }
+
+        .message-item.safe-message {
+            border-left-color: #2ed573;
+        }
+
+        .spam-label {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            animation: pulse 4s infinite;
+        }
+
+        .spam {
+            background: #ff4757;
+            color: white;
+        }
+
+        .not-spam {
+            background: #2ed573;
+            color: white;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Try Yourself Section */
+        .try-section {
+            background: white;
+        }
+
+        .input-container {
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .input-container textarea {
+            width: 100%;
+            height: 120px;
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .input-container textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.2);
+        }
+
+        .check-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 1rem 3rem;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .check-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .result {
+            margin-top: 2rem;
+            padding: 1rem;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .result.spam-result {
+            background: #ff4757;
+            color: white;
+        }
+
+        .result.not-spam-result {
+            background: #2ed573;
+            color: white;
+        }
+
+        /* Features Section */
+        .features-section {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255,255,255,0.2);
+        }
+
+        .feature-card i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+
+        /* About Model Section */
+        .about-section {
+            background: white;
+        }
+
+        .about-content {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #555;
+        }
+
+        /* Footer */
+        footer {
+            background: #333;
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+            width: 100%;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .profile-pic {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 4px solid #667eea;
+            margin: 0 auto 2rem;
+            display: block;
+            transition: all 0.3s ease;
+        }
+
+        .profile-pic:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .social-links a {
+            color: white;
+            font-size: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .social-links a:hover {
+            color: #667eea;
+            transform: translateY(-5px);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .header h1 {
+                font-size: 2.5rem;
+            }
+
+            .header p {
+                font-size: 1.2rem;
+            }
+
+            .section-content {
+                padding: 0 1rem;
+            }
+
+            .footer-content {
+                padding: 0 1rem;
+            }
+
+            .need-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Loading animation - This won't be used for the Flask form submission */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
+    <nav>
+        <div class="brand">Inbox Guard</div>
+        <div class="nav-links">
+            <a href="#home">Home</a>
+            <a href="#need">Need</a>
+            <a href="#live-example">Live Example</a>
+            <a href="#try-yourself">Try Yourself</a>
+            <a href="#features">Features</a>
+            <a href="#about">About Model</a>
+            <a href="#footer">Contact Info</a>
+        </div>
+    </nav>
 
-  <header>
-    <h1>inBox Guard - Spam SMS Classifier</h1>
-    <p>Protect your inbox from annoying and fraudulent SMS messages. iBox Guard uses AI technology to classify and filter spam from genuine messages in real time.</p>
-  </header>
+    <section id="home" class="header">
+        <h1>🛡️ Protect Your Inbox from Spam SMS!</h1>
+        <p>Advanced machine learning technology to classify and filter spam messages in real-time, keeping your inbox clean and secure.</p>
+        <a href="#try-yourself" class="cta-button">Try It Now</a>
+    </section>
 
-  <section>
-    <h2> Why Do We Need a Spam Classifier?</h2>
-    <p>
-      Every day, millions of users receive SMS containing promotions, phishing links, and scams. These not only waste time but can lead to financial and personal losses.
-      <br><br>
-      A spam SMS classifier helps automatically detect and filter out such messages, ensuring only safe and relevant messages reach your attention.
-    </p>
-  </section>
+    <section id="need" class="section need-section">
+        <div class="section-content">
+            <h2>Why Do You Need Inbox Guard?</h2>
+            <div class="need-cards">
+                <div class="need-card">
+                    <i class="fas fa-shield-alt"></i>
+                    <h3>Fraud Protection</h3>
+                    <p>Shield yourself from financial scams and fraudulent messages that can cost you money and personal information.</p>
+                </div>
+                <div class="need-card">
+                    <i class="fas fa-fish"></i>
+                    <h3>Phishing Prevention</h3>
+                    <p>Detect and block phishing attempts that try to steal your credentials and sensitive data.</p>
+                </div>
+                <div class="need-card">
+                    <i class="fas fa-ban"></i>
+                    <h3>Spam Elimination</h3>
+                    <p>Automatically filter out unwanted promotional messages and spam that clutter your inbox.</p>
+                </div>
+                <div class="need-card">
+                    <i class="fas fa-clock"></i>
+                    <h3>Time Saving</h3>
+                    <p>Spend less time sorting through messages and focus on what matters most to you.</p>
+                </div>
+                <div class="need-card">
+                    <i class="fas fa-user-secret"></i>
+                    <h3>Privacy Protection</h3>
+                    <p>Keep your personal information secure from data harvesting and identity theft attempts.</p>
+                </div>
+                <div class="need-card">
+                    <i class="fas fa-mobile-alt"></i>
+                    <h3>Device Performance</h3>
+                    <p>Reduce notification clutter and improve your device's performance by filtering unwanted messages.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-  <section>
-    <h2> Examples of SMS Classification</h2>
-    <div class="examples">
-      <div class="sms-card spam">
-        <strong>Spam:</strong><br>
-        "Congratulations! You've won ₹1,00,000. Click here to claim: bit.ly/xyz123"
-      </div>
-      <div class="sms-card">
-        <strong>Ham:</strong><br>
-        "Your OTP is 487623 for the transaction on XYZ Bank."
-      </div>
-      <div class="sms-card spam">
-        <strong>Spam:</strong><br>
-        "Act now! Lowest loan rates guaranteed. Call 9999999999 now!"
-      </div>
-      <div class="sms-card">
-        <strong>Ham:</strong><br>
-        "Hi! Let's catch up at the café by 6 PM."
-      </div>
+    <section id="live-example" class="section live-example">
+        <div class="section-content">
+            <h2>Live Classification Demo</h2>
+            <div class="message-display">
+                <div id="messageContainer">
+                    </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="try-yourself" class="section try-section">
+    <div class="section-content">
+        <h2>Try Yourself!</h2>
+        <div class="input-container">
+            <form method="post">
+                <textarea id="messageInput" name="userMessage" placeholder="Write your message here..." required>{{ original_message if original_message else '' }}</textarea>
+                <button type="submit" class="check-btn">
+                    Check Message
+                </button>
+            </form>
+
+            {% if prediction_result %}
+                <div id="result" class="result {{ 'spam-result' if prediction_result == 'Spam' else 'not-spam-result' }}">
+                    {% if prediction_result == 'Spam' %}
+                        🚨 This looks like SPAM! Be careful.
+                    {% else %}
+                        ✅ This appears to be a SAFE message.
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
     </div>
-  </section>
+    </section>
 
-  <section>
-    <h2> Try It Yourself!</h2>
-    <form action="/" method="post"> <label for="userMessage">Enter your SMS message:</label>
-        <textarea id="userMessage" name="userMessage" rows="5" placeholder="Type or paste your SMS here..." required>{{ original_message if original_message else '' }}</textarea>
-        <button type="submit">Check if it's Spam</button>
-    </form>
-
-    {% if prediction_result %}
-        <div class="prediction-area {% if prediction_result == 'Spam' %}prediction-spam{% else %}prediction-ham{% endif %}">
-            Prediction: {{ prediction_result }}
+    <section id="features" class="section features-section">
+        <div class="section-content">
+            <h2>Key Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <i class="fas fa-bolt"></i>
+                    <h3>Real-time Classification</h3>
+                    <p>Instant spam detection with lightning-fast processing speed.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-feather-alt"></i>
+                    <h3>Lightweight</h3>
+                    <p>Minimal resource usage with maximum efficiency and performance.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-heart"></i>
+                    <h3>User-friendly UI</h3>
+                    <p>Intuitive interface designed for seamless user experience.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-bullseye"></i>
+                    <h3>Accurate Results</h3>
+                    <p>High precision classification with continuous learning capabilities.</p>
+                </div>
+            </div>
         </div>
-        {% if original_message %}
-        <div class="original-message-display">
-            Your message: "{{ original_message }}"
+    </section>
+
+    <section id="about" class="section about-section">
+        <div class="section-content">
+            <h2>About Our Model</h2>
+            <div class="about-content">
+                <p>Inbox Guard utilizes advanced machine learning techniques including <strong>Naive Bayes</strong> and <strong>Logistic Regression</strong> algorithms to achieve superior spam detection accuracy. Our model has been trained on extensive real-world SMS datasets, incorporating natural language processing and feature engineering to understand message patterns, sender behavior, and content characteristics.</p>
+                <br>
+                <p>The system continuously learns from new data patterns while maintaining privacy and security standards. With over 95% accuracy rate, Inbox Guard provides reliable protection against evolving spam and phishing techniques.</p>
+            </div>
         </div>
-        {% endif %}
-    {% endif %}
-  </section>
+    </section>
 
-  <section>
-    <h2> Key Features</h2>
-    <ul>
-      <li>AI-based SMS classification</li>
-      <li>Detects fraud, scam, promotional messages</li>
-      <li>Safe filtering with privacy protection</li>
-      <li>Works in real-time with low latency</li>
-    </ul>
-  </section>
+    <footer id="footer">
+        <div class="footer-content">
+            <img src="https://avatars.githubusercontent.com/u/116748063?v=4?s=400" alt="Creator Profile" class="profile-pic">
+            <div class="social-links">
+                <a href="https://www.linkedin.com/in/shivam-shukla-a462b3223/" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                <a href="https://github.com/Shivam-Shukl" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                <a href="mailto:shivamshuklass661@gmail.com" aria-label="Gmail"><i class="fas fa-envelope"></i></a>
+                <a href="https://www.instagram.com/sri_bhanu_shivam/" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            </div>
+            <p>&copy; 2025 Inbox Guard. All rights reserved.</p>
+        </div>
+    </footer>
 
-  <footer>
-    &copy; 2025 iBox Guard. All rights reserved.
-  </footer>
+    <script>
+        // Sample messages for live demo
+        const sampleMessages = [
+            { text: "Congratulations! You've won $1000! Click here to claim your prize now!", spam: true },
+            { text: "Hey, are you free for lunch tomorrow?", spam: false },
+            { text: "URGENT: Your bank account will be closed. Call 123-456-7890 immediately!", spam: true },
+            { text: "Meeting scheduled for 3 PM in conference room B", spam: false },
+            { text: "Limited time offer! Get 90% off on all products. Act now!", spam: true },
+            { text: "Thanks for the great presentation today!", spam: false },
+            { text: "Your loan has been approved! Send your SSN to confirm.", spam: true },
+            { text: "Reminder: Doctor's appointment tomorrow at 10 AM", spam: false }
+        ];
 
+        let messageIndex = 0;
+
+        // Live demo animation
+        function showNextMessage() {
+            const container = document.getElementById('messageContainer');
+            const message = sampleMessages[messageIndex];
+
+            const messageElement = document.createElement('div');
+            messageElement.className = `message-item ${message.spam ? 'spam-message' : 'safe-message'}`;
+            messageElement.innerHTML = `
+                <span style="flex: 1; font-weight: 500;">${message.text}</span>
+                <span class="spam-label ${message.spam ? 'spam' : 'not-spam'}">
+                    ${message.spam ? 'SPAM ⚠️' : 'SAFE ✅'}
+                </span>
+            `;
+
+            container.appendChild(messageElement);
+
+            // Trigger animation
+            setTimeout(() => {
+                messageElement.classList.add('show');
+            }, 100);
+
+            // Remove old messages to prevent overflow
+            if (container.children.length > 5) {
+                container.removeChild(container.firstChild);
+            }
+
+            messageIndex = (messageIndex + 1) % sampleMessages.length;
+        }
+
+        // Start live demo
+        setInterval(showNextMessage, 3000);
+        showNextMessage(); // Show first message immediately
+
+        // REMOVED THE JAVASCRIPT classifyMessage() function as it's now handled by Flask.
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe all sections for scroll animations
+        document.querySelectorAll('.section-content').forEach(section => {
+            section.style.opacity = '0';
+            section.style.transform = 'translateY(50px)';
+            section.style.transition = 'all 0.6s ease-out';
+            observer.observe(section);
+        });
+    </script>
 </body>
 </html>
